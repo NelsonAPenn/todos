@@ -39,11 +39,11 @@ todos add [node type (optional, default is a task)] "[description]" to [id of di
 todos complete [id of completed node]
 ```
 Operates recursively, completing subtasks as well.
-- `link` command:
+- `link` command: for if you want a node you've already added to depend on or be depended on by another node.
 ```bash
 todos link [id of direct parent to be] [id of direct child to be]
 ```
-- `unlink` command:
+- `unlink` command: for if you change your mind about the structure of your dependency DAG.
 ```bash
 todos unlink [id of direct parent] [id of direct child]
 ```
