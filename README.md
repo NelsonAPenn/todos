@@ -47,3 +47,7 @@ todos link [id of direct parent to be] [id of direct child to be]
 ```bash
 todos unlink [id of direct parent] [id of direct child]
 ```
+
+## Upcoming changes
+- deadlines
+- Zenity notifications for Ubuntu
