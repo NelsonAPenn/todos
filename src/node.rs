@@ -69,7 +69,10 @@ impl Node
         }
         match self.node_type {
             NodeType::GOAL => {
-                println!("{} goal (id {}):", &self.description, &self.id);
+                println!("\x1B[01;94m{} goal (id {}):\x1B[00m", &self.description, &self.id);
+            },
+            NodeType::CONDITION => {
+                println!("\x1B[01;33m{} ({}): {}\x1B[00m", &self.id, self.node_type ,&self.description);
             },
             _ => {
                 println!("{} ({}): {}", &self.id, self.node_type ,&self.description);
