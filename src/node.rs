@@ -195,7 +195,7 @@ impl Graph
     }
     pub fn add_node(&mut self, n: Node) -> Result<usize, ()>
     {
-        let mut id_to_return: usize = 0;
+        let id_to_return: usize = self.nodes.len();
         // if it don't work, don't panic
         match self.validate_node(&n)
         {
@@ -208,7 +208,7 @@ impl Graph
                     deps: n.deps,
                     parents: n.parents
                 };
-                id_to_return = node_to_add.id.clone();
+
                 // add other ends of links
                 for p in &node_to_add.parents
                 {
@@ -248,10 +248,47 @@ impl Graph
             _ => {}
         }
 
+        self.inner_remove(index.clone());
+
+        let invalid_val = self.nodes.len().clone();
+        //remove invalid nodes
+        self.nodes.retain(|x| x.id != invalid_val);
+
+        //update ids/indices
+        for i in 0..self.nodes.len()
+        {
+            self.rename_node(&self.nodes[i].id.clone(), &i);
+        }
+        // but if it messes up your graph, then panic
+        match self.validate()
+        {
+            Ok(()) => { return Ok(()); },
+            Err(()) => { panic!("Removed node quite badly!!!"); } 
+        }
+    }
+
+    fn rename_node(&mut self, old_id: &usize, new_id: &usize)
+    {
+        for node in &mut self.nodes
+        {
+            if node.id == *old_id
+            {
+                node.id = new_id.clone();
+            }
+
+            node.parents = node.parents.iter().map(|x| { if x == old_id { new_id.clone() } else { x.clone() } }).collect();
+            node.deps = node.deps.iter().map(|x| { if x == old_id { new_id.clone() } else { x.clone() } }).collect();
+        }
+    }
+
+    fn inner_remove(&mut self, index: usize)
+    {
+
         let to_remove:Vec<usize> = self.nodes[index].deps.clone();
+
         for node in to_remove 
         {
-            self.remove_node(node).unwrap();
+            self.inner_remove(node);
         }
 
         //remove refs to this node
@@ -261,24 +298,8 @@ impl Graph
             node.deps.retain(|&x| x != index);
         }
 
-        //remove node
-        self.nodes.retain(|x| x.id != index);
-        //update ids/indices
-        for node in &mut self.nodes
-        {
-            if node.id >= index
-            {
-                node.id -= 1;
-            }
-            node.parents = node.parents.iter().map(|x| { if x >= &index { x.clone() - 1 } else { x.clone() } }).collect();
-            node.deps = node.deps.iter().map(|x| { if x >= &index { x.clone() - 1 } else { x.clone() } }).collect();
-        }
-        // but if it messes up your graph, then panic
-        match self.validate()
-        {
-            Ok(()) => { return Ok(()); },
-            Err(()) => { panic!("Removed node quite badly!!!"); } 
-        }
+        // mark node for deletion
+        self.nodes[index].id = self.nodes.len();
     }
     pub fn check_topology(&self) -> Result<(), ()>
     {

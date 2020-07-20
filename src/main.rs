@@ -1,4 +1,5 @@
 #[macro_use] extern crate num_derive;
+
 mod node;
 use node::{NodeType, Node, Graph};
 use std::env;
