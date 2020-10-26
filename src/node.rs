@@ -7,33 +7,32 @@ use std::fs;
 use std::result::Result as Result;
 use std::io::prelude::*;
 use std::fs::File;
-use num_traits::{ToPrimitive, FromPrimitive};
+use num_traits::{FromPrimitive};
 use num_derive::{FromPrimitive, ToPrimitive};    
 use std::io::BufReader;
 use serde::{Serialize, Deserialize};
-use serde_json::{Serializer, Deserializer};
 
 pub enum StorageVersion
 {
-    JSON,
-    HALF_CSV
+    Json,
+    HalfCsv
 }
 
 #[derive(Clone, Serialize, Deserialize, ToPrimitive, FromPrimitive)]
 pub enum NodeType
 {
-    TASK,
-    CONDITION,
-    GOAL
+    Task,
+    Condition,
+    Goal
 }
 impl fmt::Display for NodeType
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
         write!(f, "{}", match self {
-            NodeType::TASK => "task",
-            NodeType::CONDITION => "condition",
-            NodeType::GOAL => "goal"
+            NodeType::Task => "task",
+            NodeType::Condition => "condition",
+            NodeType::Goal => "goal"
         })
     }
 }
@@ -43,9 +42,9 @@ impl NodeType
     {
         match &s[..]
         {
-            "task" => Some(NodeType::TASK),
-            "condition" => Some(NodeType::CONDITION),
-            "goal" => Some(NodeType::GOAL),
+            "task" => Some(NodeType::Task),
+            "condition" => Some(NodeType::Condition),
+            "goal" => Some(NodeType::Goal),
             _ => None
         }
     }
@@ -80,10 +79,10 @@ impl Node
             print!("  ");
         }
         match self.node_type {
-            NodeType::GOAL => {
+            NodeType::Goal => {
                 println!("\x1B[01;94m{} goal (id {}):\x1B[00m", &self.description, &self.id);
             },
-            NodeType::CONDITION => {
+            NodeType::Condition => {
                 println!("\x1B[01;33m{} ({}): {}\x1B[00m", &self.id, self.node_type ,&self.description);
             },
             _ => {
@@ -109,8 +108,8 @@ impl Graph
     {
         let mut graph = match version
         {
-            StorageVersion::JSON => serde_json::from_str(fs::read_to_string(&filename).unwrap().as_str()).unwrap(),
-            StorageVersion::HALF_CSV => Graph::load_from_half_csv(filename)
+            StorageVersion::Json => serde_json::from_str(fs::read_to_string(&filename).unwrap().as_str()).unwrap(),
+            StorageVersion::HalfCsv => Graph::load_from_half_csv(filename)
         };
         graph.location = String::from(filename);
         graph
@@ -158,11 +157,11 @@ impl Graph
         match graph.validate()
         {
             Ok(()) => {},
-            Err(()) => {panic!("Invalid node list")}
+            Err(message) => { panic!(message) }
         };
         graph
     }
-    pub fn validate(&self) -> Result<(), ()>
+    pub fn validate(&self) -> Result<(), String>
     {
         // check indices/ ids are all within bounds
         for i in 0..self.nodes.len()
@@ -170,12 +169,12 @@ impl Graph
             // id should be the index of the node
             if self.nodes[i].id != i
             {
-                return Err(());
+                return Err("Ids do not match the list structure.".to_string());
             }
             // indices should all be within bounds
             match self.validate_node(&self.nodes[i])
             {
-                Err(()) => { return Err(()); },
+                Err(message) => { return Err(message); },
                 _ => {}
             }
             //links should be double sided
@@ -183,31 +182,31 @@ impl Graph
             {
                 if !self.nodes[*p].deps.contains(&i)
                 {
-                    return Err(());
+                    return Err(format!("One-sided dependency encountered: parent with id {} does not acknowledge the claimed child status of node with id {}", p, i).to_string());
                 }
             }
             for p in &self.nodes[i].deps
             {
                 if !self.nodes[*p].parents.contains(&i)
                 {
-                    return Err(());
+                    return Err(format!("One-sided dependency encountered: child with id {} does not acknowledge the claimed parental status of node with id {}", p, i).to_string());
                 }
             }
         }
         match self.check_topology()
         {
-            Err(()) => { return Err(()) },
+            Err(message) => { return Err(message) },
             _ => {}
         }
         Ok(())
     }
-    fn validate_node(&self, n: &Node) -> Result<(), ()>
+    fn validate_node(&self, n: &Node) -> Result<(), String>
     {
         for j in &n.deps
         {
             match self.nodes.get(*j)
             {
-                None => { return Err(()); },
+                None => { return Err(format!("Listed dependency {} for node with id {} not present in graph.", j, n.id ).to_string()); },
                 _ => {}
             }
         }
@@ -215,19 +214,19 @@ impl Graph
         {
             match self.nodes.get(*j)
             {
-                None => { return Err(()); },
+                None => { return Err(format!("Listed parent {} for node with id {} not present in graph.", j, n.id ).to_string()); },
                 _ => {}
             }
         }
         return Ok(());
     }
-    pub fn add_node(&mut self, n: Node) -> Result<usize, ()>
+    pub fn add_node(&mut self, n: Node) -> Result<usize, String>
     {
         let id_to_return: usize = self.nodes.len();
         // if it don't work, don't panic
         match self.validate_node(&n)
         {
-            Err(()) => {return Err(());},
+            Err(message) => {return Err(message);},
             Ok(()) => {
                 let node_to_add = Node {
                     id: self.nodes.len(),
@@ -260,20 +259,25 @@ impl Graph
         match self.validate()
         {
             Ok(()) => { return Ok(id_to_return); },
-            Err(()) => { self.remove_node(self.nodes.len() - 1, false).unwrap(); } // try to remove last node
+            Err(_message) => {
+                match self.remove_node(self.nodes.len() - 1, false) {
+                    Ok(()) => {},
+                    Err(message) => panic!(message)
+                }
+            } // try to remove last node
         }
         // but if it messes up your graph, then panic
         match self.validate()
         {
             Ok(()) => { return Ok(id_to_return); },
-            Err(()) => { panic!("Added crappy node and couldn't get rid of it!!!"); } 
+            Err(message) => { panic!("Added crappy node and couldn't properly get rid of it!!!\n Error: {}", message); } 
         }
     }
-    pub fn remove_node(&mut self, index: usize, recurse: bool) -> Result<(), ()>
+    pub fn remove_node(&mut self, index: usize, recurse: bool) -> Result<(), String>
     {
         match self.nodes.get(index)
         {
-            None => { return Err(()); },
+            None => { return Err(format!("Node with id {} not present in todos.", index).to_string()); },
             _ => {}
         }
 
@@ -292,7 +296,7 @@ impl Graph
         match self.validate()
         {
             Ok(()) => { return Ok(()); },
-            Err(()) => { panic!("Removed node quite badly!!!"); } 
+            Err(message) => { panic!(message); } 
         }
     }
 
@@ -333,7 +337,7 @@ impl Graph
         // mark node for deletion
         self.nodes[index].id = self.nodes.len();
     }
-    pub fn check_topology(&self) -> Result<(), ()>
+    pub fn check_topology(&self) -> Result<(), String>
     {
         let mut g = self.clone();
         let mut out_edges = Vec::<usize>::new();
@@ -362,21 +366,21 @@ impl Graph
         {
             if !node.parents.is_empty() || !node.deps.is_empty()
             {
-                return Err(());
+                return Err("Idiot. Haven't you heard of a DAG before?".to_string());
             }
         }
         return Ok(());
     }
-    pub fn link(&mut self, parent: &usize, child: &usize) -> Result<(), ()>
+    pub fn link(&mut self, parent: &usize, child: &usize) -> Result<(), String>
     {
         match self.nodes.get(*parent)
         {
-            None => { return Err(()); },
+            None => { return Err(format!("Parent node {} doesn't exist.", parent).to_string()); },
             _ => {}
         }
         match self.nodes.get(*child)
         {
-            None => { return Err(()); },
+            None => { return Err(format!("Child node {} doesn't exist.", child).to_string()); },
             _ => {}
         }
         if !self.nodes[*parent].deps.contains(child)
@@ -389,16 +393,16 @@ impl Graph
         }
         self.validate()
     }
-    pub fn unlink(&mut self, parent: &usize, child: &usize) -> Result<(), ()>
+    pub fn unlink(&mut self, parent: &usize, child: &usize) -> Result<(), String>
     {
         match self.nodes.get(*parent)
         {
-            None => { return Err(()); },
+            None => { return Err(format!("Parent node {} doesn't exist.", parent).to_string()); },
             _ => {}
         }
         match self.nodes.get(*child)
         {
-            None => { return Err(()); },
+            None => { return Err(format!("Child node {} doesn't exist.", child).to_string()); },
             _ => {}
         }
         self.nodes[*parent].deps.retain( |x| *x != *child);
@@ -409,7 +413,7 @@ impl Graph
     {
         match self.nodes[*parent].node_type
         {
-            NodeType::GOAL => {
+            NodeType::Goal => {
                 // always print goals
                 self.nodes[*parent].print(level);
                 level += 1;
@@ -449,6 +453,6 @@ impl Graph
             Err(_error) => {panic!("Unable to open file")}
         };
 
-        write!(f, "{}", serde_json::to_string(&self).unwrap());
+        write!(f, "{}", serde_json::to_string(&self).unwrap()).unwrap();
     }
 }

@@ -3,6 +3,7 @@
 mod node;
 use node::{NodeType, Node, Graph};
 use std::env;
+use std::collections::VecDeque;
 
 pub enum Command
 {
@@ -10,7 +11,13 @@ pub enum Command
     {
         description: String,
         node_type: NodeType,
-        to: Option<usize>
+        to: Option<usize>,
+    },
+    NewBefore
+    {
+        description: String,
+        node_type: NodeType,
+        before: usize,
     },
     Complete
     {
@@ -39,180 +46,148 @@ pub enum Command
 
 fn main()
 {
-    let args: Vec<String> = env::args().collect();
-    let mut g = Graph::load("/home/nelson/.todos", node::StorageVersion::JSON);
-    match get_command(args) 
+    let mut args: VecDeque<String> = env::args().collect();
+    args.pop_front();
+    let mut g = Graph::load("/home/nelson/.todos", node::StorageVersion::Json);
+    match get_command(&mut args) 
     {
         Some(command) => { parse_command(command, &mut g) },
         None => { println!("Invalid command."); }
     }
     g.save();
 }
-fn get_command(arg_list: Vec<String>) -> Option<Command>
+fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
 {
-    let mut overwhelm = false;
-    let mut sanitized = Vec::<String>::new();
-    for i in 0..arg_list.len()
+    let short = String::from("-o");
+    let long = String::from("--overwhelm");
+    let overwhelm = arg_list.contains(&short) || arg_list.contains(&long);
+    arg_list.retain( |x| *x != short && *x != long);
+
+    let command_option = arg_list.pop_front();
+    if let None = command_option
     {
-        let arg = &arg_list[i];
-        if arg == "-o" || arg == "--overwhelm"
-        {
-            overwhelm = true;
-        }
-        else if i != 0
-        {
-            sanitized.push(arg.clone());
-        }
+        return Some(Command::Show{
+            overwhelm: overwhelm
+        });
     };
-    if sanitized.is_empty()
-    {
-        return Some(Command::Show{ overwhelm: overwhelm });
-    }
-    match &sanitized[0][..]
+    let command = command_option.unwrap();
+    match &command[..]
     {
         "add" => {
-            match sanitized.len()
+            // read type (default = task)
+            let node_type = 
+            if let Some(provided) = NodeType::from_string(arg_list.front()?)
             {
-                2 => {
-                    let node_type = NodeType::TASK;
-                    let description = sanitized[1].clone();
-                    Some(Command::New{description:description, node_type:node_type, to:None})
-                },
-                3 => {
-                    let node_type = match NodeType::from_string(&sanitized[1])
+                arg_list.pop_front();
+                provided
+            }
+            else
+            {
+                NodeType::Task
+            };
+            // read message
+            let description = arg_list.pop_front()?;
+
+            // read optional "to" clause or "above" clause
+            let next_token_option = arg_list.pop_front();
+            if let None = next_token_option
+            {
+                    return Some(Command::New{
+                        node_type: node_type,
+                        description: description,
+                        to: None
+                    });
+            }
+            let next_token = next_token_option.unwrap();
+            match &next_token[..]
+            {
+                "to" | "under" => {
+                    let id = arg_list.pop_front()?.parse::<usize>().ok()?;
+                    if !arg_list.is_empty()
                     {
-                        Some(nt) => nt,
-                        None => { return None; }
-                    };
-                    let description = sanitized[2].clone();
-                    Some(Command::New{description:description, node_type:node_type, to:None})
-                },
-                4 => {
-                    let node_type = NodeType::TASK;
-                    let description = sanitized[1].clone();
-                    let to: usize = match &sanitized[2][..]
-                    {
-                        "to" => {
-                            match sanitized[3].parse::<usize>()
-                            {
-                                Ok(val) => val,
-                                Err(_error) => { return None; }
-                            }
-                        },
-                        _ => { return None; } 
-                    };
-                    Some(Command::New{description:description, node_type:node_type, to:Some(to)})
-                },
-                5 => {
-                    let node_type = match NodeType::from_string(&sanitized[1])
-                    {
-                        Some(nt) => nt,
-                        None => { return None; }
-                    };
-                    let description = sanitized[2].clone();
-                    let to: usize = match &sanitized[3][..]
-                    {
-                        "to" => {
-                            match sanitized[4].parse::<usize>()
-                            {
-                                Ok(val) => val,
-                                Err(_error) => { return None; }
-                            }
-                        },
-                        _ => { return None; } 
-                    };
-                    Some(Command::New{description:description, node_type:node_type, to:Some(to)})
+                        return None;
+                    }
+                    return Some(Command::New{
+                        node_type: node_type,
+                        description: description,
+                        to: Some(id)
+                    });
+
 
                 },
-                _ => { return None; }
-            }
-        },
-        "complete" => 
-        {
-            match sanitized.len()
-            {
-                2 => {
-                    let id: usize = match sanitized[1].trim().parse::<usize>()
+                "before" | "above" => {
+                    let id = arg_list.pop_front()?.parse::<usize>().ok()?;
+                    if !arg_list.is_empty()
                     {
-                        Ok(val) => val,
-                        Err(_error)=> {
-                            return None;
-                        }
-                    };
-                    Some(Command::Complete{ id })
+                        return None;
+                    }
+                    return Some(Command::NewBefore{
+                        node_type: node_type,
+                        description: description,
+                        before: id
+                    });
                 },
-                _ => { return None; }
+                _ => {
+                    return None;
+                }
             }
+
         },
-        "link" => 
-        {
-            match sanitized.len()
+        "complete" => {
+            let id = arg_list.pop_front()?.parse::<usize>().ok()?;
+            if !arg_list.is_empty()
             {
-                3 => {
-                    let parent: usize = match sanitized[1].trim().parse::<usize>()
-                    {
-                        Ok(val) => val,
-                        Err(_error)=> {
-                            return None;
-                        }
-                    };
-                    let child: usize = match sanitized[2].trim().parse::<usize>()
-                    {
-                        Ok(val) => val,
-                        Err(_error)=> {
-                            return None;
-                        }
-                    };
-                    Some(Command::Link{ parent, child })
-                },
-                _ => { return None; }
+                return None;
             }
+            return Some(Command::Complete{
+                id: id
+            });
+
         },
-        "unlink" => 
-        {
-            match sanitized.len()
+        "link" => {
+            let parent = arg_list.pop_front()?.parse::<usize>().ok()?;
+            let child = arg_list.pop_front()?.parse::<usize>().ok()?;
+            if !arg_list.is_empty()
             {
-                3 => {
-                    let parent: usize = match sanitized[1].trim().parse::<usize>()
-                    {
-                        Ok(val) => val,
-                        Err(_error)=> {
-                            return None;
-                        }
-                    };
-                    let child: usize = match sanitized[2].trim().parse::<usize>()
-                    {
-                        Ok(val) => val,
-                        Err(_error)=> {
-                            return None;
-                        }
-                    };
-                    Some(Command::Unlink{ parent, child })
-                },
-                _ => { return None; }
+                return None;
             }
+            return Some( Command::Link{
+                parent: parent,
+                child: child
+            });
+
+        },
+        "unlink" => {
+            let parent = arg_list.pop_front()?.parse::<usize>().ok()?;
+            let child = arg_list.pop_front()?.parse::<usize>().ok()?;
+            if !arg_list.is_empty()
+            {
+                return None;
+            }
+            return Some( Command::Unlink{
+                parent: parent,
+                child: child
+            });
         },
         "under" =>
         {
-            match sanitized.len()
+            let id = arg_list.pop_front()?.parse::<usize>().ok()?;
+            if !arg_list.is_empty()
             {
-                2 => {
-                    let id: usize = match sanitized[1].trim().parse::<usize>()
-                    {
-                        Ok(val) => val,
-                        Err(_error)=> {
-                            return None;
-                        }
-                    };
-                    Some(Command::Under{ id, overwhelm })
-                },
-                _ => { return None; }
+                return None;
             }
-
-        },
-        _ => { return None; }
+            return Some(Command::Under{
+                id: id,
+                overwhelm: overwhelm
+            });
+        }
+        _ => {
+            return None
+        }
     }
+
 }
+
 fn parse_command(command: Command, graph: &mut Graph)
 {
     match command
@@ -237,10 +212,57 @@ fn parse_command(command: Command, graph: &mut Graph)
                     graph.nodes[id].print(1);
 
                 },
-                Err(()) => {
-                    println!("Idiot. Haven't you heard of a DAG before?");
+                Err(message) => {
+                    println!("{}", message);
                 }
             }
+        },
+        Command::NewBefore { description, node_type, before } => {
+            let node_to_shift = &graph.nodes[before];
+            let parents = node_to_shift.parents.clone();
+            // unlink all references before node 'before'
+            for parent in &parents
+            {
+                match graph.unlink(&parent, &before){
+                    Ok(()) => {},
+                    Err(message) => {
+                        panic!(message);
+                    }
+                }
+                
+            }
+
+            let n = Node
+            {
+                id:0,
+                description: description,
+                node_type: node_type,
+                due_date: None,
+                deps: vec![before],
+                parents: parents
+            };
+
+            match graph.add_node(n)
+            {
+                Ok(id) => {
+                    match graph.link(&id, &before)
+                    {
+                        Ok(()) => {
+                            println!("Ha! Your workload just got a little bigger. Node added:"); 
+                            graph.nodes[id].print(1);
+                        },
+                        Err(message) => {
+                            println!("{}", message);
+                        }
+
+                    }
+
+                },
+                Err(message) => {
+                    println!("{}", message);
+                }
+            }
+
         },
         Command::Complete { id } => {
             match graph.remove_node(id, true)
@@ -248,8 +270,8 @@ fn parse_command(command: Command, graph: &mut Graph)
                 Ok(()) => {
                     println!("Thank god, you managed to complete something")
                 },
-                Err(()) => {
-                    println!("Failed to remove node.");
+                Err(message) => {
+                    println!("{}", message);
                 }
             }
         },
@@ -259,8 +281,8 @@ fn parse_command(command: Command, graph: &mut Graph)
                 Ok(()) => {
                     println!("Successfully created link");
                 }
-                Err(()) => {
-                    println!("Idiot. Haven't you heard of a DAG before?");
+                Err(message) => {
+                    println!("{}", message);
                 }
             }
         },
@@ -270,8 +292,8 @@ fn parse_command(command: Command, graph: &mut Graph)
                 Ok(()) => {
                     println!("Successfully removed link");
                 }
-                Err(()) => {
-                    println!("Idiot. Haven't you heard of a DAG before?");
+                Err(message) => {
+                    println!("{}", message);
                 }
             }
         },
