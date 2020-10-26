@@ -41,6 +41,11 @@ pub enum Command
     {
         id: usize,
         overwhelm: bool
+    },
+    Edit
+    {
+        id: usize,
+        new_description: String
     }
 }
 
@@ -181,6 +186,15 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
                 overwhelm: overwhelm
             });
         }
+        "edit" =>
+        {
+            let id = arg_list.pop_front()?.parse::<usize>().ok()?;
+            let description = arg_list.pop_front()?;
+            return Some(Command::Edit{
+                id: id,
+                new_description: description
+            });
+        }
         _ => {
             return None
         }
@@ -302,6 +316,14 @@ fn parse_command(command: Command, graph: &mut Graph)
         },
         Command::Under { id, overwhelm } => {
             graph.show(&id, 0, overwhelm)
+        },
+        Command::Edit { id, new_description } => 
+        {
+            match graph.relabel(id, new_description)
+            {
+                Ok(()) => println!("Successfully relabeled node."),
+                Err(message) => println!("{}", message)
+            }
         }
     }
 }

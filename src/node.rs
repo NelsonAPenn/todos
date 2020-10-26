@@ -436,6 +436,16 @@ impl Graph
         }
 
     }
+    pub fn relabel(&mut self, id: usize, new_description: String) -> Result<(), String>
+    {
+        match self.nodes.get(id)
+        {
+            None => { return Err(format!("Node with id {} doesn't exist.", id).to_string()); },
+            _ => {}
+        }
+        self.nodes[id].description = new_description;
+        Ok(())
+    }
     pub fn todos(&self, overwhelm: bool)
     {
         for node in &self.nodes
