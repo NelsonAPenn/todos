@@ -1,14 +1,25 @@
 extern crate num;
+extern crate serde_json;
+extern crate serde;
 
 use std::fmt;
+use std::fs;
 use std::result::Result as Result;
 use std::io::prelude::*;
 use std::fs::File;
-use num_derive::FromPrimitive;    
-use num_traits::FromPrimitive;
+use num_traits::{ToPrimitive, FromPrimitive};
+use num_derive::{FromPrimitive, ToPrimitive};    
 use std::io::BufReader;
+use serde::{Serialize, Deserialize};
+use serde_json::{Serializer, Deserializer};
 
-#[derive(Clone, FromPrimitive, ToPrimitive)]
+pub enum StorageVersion
+{
+    JSON,
+    HALF_CSV
+}
+
+#[derive(Clone, Serialize, Deserialize, ToPrimitive, FromPrimitive)]
 pub enum NodeType
 {
     TASK,
@@ -40,12 +51,13 @@ impl NodeType
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Node
 {
     pub id: usize,
     pub description: String,
     pub node_type: NodeType,
+    pub due_date: Option<String>,
     pub deps: Vec<usize>,
     pub parents: Vec<usize>
 }
@@ -81,19 +93,33 @@ impl Node
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Graph
 {
-    pub nodes: Vec<Node>
+    pub nodes: Vec<Node>,
+
+    #[serde(skip_serializing, skip_deserializing)]
+    location: String 
 }
 
 #[allow(dead_code)]
 impl Graph
 {
-    pub fn new() -> Graph
+    pub fn load(filename: &str, version: StorageVersion) ->  Graph
+    {
+        let mut graph = match version
+        {
+            StorageVersion::JSON => serde_json::from_str(fs::read_to_string(&filename).unwrap().as_str()).unwrap(),
+            StorageVersion::HALF_CSV => Graph::load_from_half_csv(filename)
+        };
+        graph.location = String::from(filename);
+        graph
+    }
+
+    pub fn load_from_half_csv(filename: &str) -> Graph
     {
         let mut nodes:Vec<Node> = Vec::<Node>::new();
-        let f = match File::open("/home/nelson/.todos") {
+        let f = match File::open(filename) {
             Ok(file) => file,
             Err(_error) => {panic!("Unable to open file")}
         };
@@ -119,13 +145,15 @@ impl Graph
                 id: id,
                 description: description,
                 node_type: node_type,
+                due_date: None,
                 deps: deps,
                 parents: parents
             });
 
         }
         let graph = Graph {
-            nodes: nodes
+            nodes: nodes,
+            location: String::from("")
         };
         match graph.validate()
         {
@@ -205,6 +233,7 @@ impl Graph
                     id: self.nodes.len(),
                     description: n.description,
                     node_type: n.node_type,
+                    due_date: None,
                     deps: n.deps,
                     parents: n.parents
                 };
@@ -231,7 +260,7 @@ impl Graph
         match self.validate()
         {
             Ok(()) => { return Ok(id_to_return); },
-            Err(()) => { self.remove_node(self.nodes.len() - 1).unwrap(); } // try to remove last node
+            Err(()) => { self.remove_node(self.nodes.len() - 1, false).unwrap(); } // try to remove last node
         }
         // but if it messes up your graph, then panic
         match self.validate()
@@ -240,7 +269,7 @@ impl Graph
             Err(()) => { panic!("Added crappy node and couldn't get rid of it!!!"); } 
         }
     }
-    pub fn remove_node(&mut self, index: usize) -> Result<(), ()>
+    pub fn remove_node(&mut self, index: usize, recurse: bool) -> Result<(), ()>
     {
         match self.nodes.get(index)
         {
@@ -248,7 +277,7 @@ impl Graph
             _ => {}
         }
 
-        self.inner_remove(index.clone());
+        self.inner_remove(index.clone(), recurse);
 
         let invalid_val = self.nodes.len().clone();
         //remove invalid nodes
@@ -281,14 +310,17 @@ impl Graph
         }
     }
 
-    fn inner_remove(&mut self, index: usize)
+    fn inner_remove(&mut self, index: usize, recurse: bool)
     {
 
         let to_remove:Vec<usize> = self.nodes[index].deps.clone();
 
-        for node in to_remove 
+        if recurse
         {
-            self.inner_remove(node);
+            for node in to_remove 
+            {
+                self.inner_remove(node, recurse);
+            }
         }
 
         //remove refs to this node
@@ -410,17 +442,13 @@ impl Graph
             }
         }
     }
-    pub fn write(&self)
+    pub fn save(&self)
     {
-        let mut f = match File::create("/home/nelson/.todos") {
+        let mut f = match File::create(&self.location.as_str()) {
             Ok(file) => file,
             Err(_error) => {panic!("Unable to open file")}
         };
-        let mut all_text = String::new();
-        for node in &self.nodes
-        {
-            all_text += &format!("{}\n", node)[..];
-        }
-        f.write_all(all_text.as_bytes()).unwrap();
+
+        write!(f, "{}", serde_json::to_string(&self).unwrap());
     }
 }

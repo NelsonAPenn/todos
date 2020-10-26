@@ -1,4 +1,4 @@
-#[macro_use] extern crate num_derive;
+// #[macro_use] extern crate num_derive;
 
 mod node;
 use node::{NodeType, Node, Graph};
@@ -40,13 +40,13 @@ pub enum Command
 fn main()
 {
     let args: Vec<String> = env::args().collect();
-    let mut g = Graph::new();
+    let mut g = Graph::load("/home/nelson/.todos", node::StorageVersion::JSON);
     match get_command(args) 
     {
         Some(command) => { parse_command(command, &mut g) },
         None => { println!("Invalid command."); }
     }
-    g.write();
+    g.save();
 }
 fn get_command(arg_list: Vec<String>) -> Option<Command>
 {
@@ -223,6 +223,7 @@ fn parse_command(command: Command, graph: &mut Graph)
                 id:0,
                 description: description,
                 node_type: node_type,
+                due_date: None,
                 deps: Vec::<usize>::new(),
                 parents: match to {
                     Some(val) => vec![val],
@@ -242,7 +243,7 @@ fn parse_command(command: Command, graph: &mut Graph)
             }
         },
         Command::Complete { id } => {
-            match graph.remove_node(id)
+            match graph.remove_node(id, true)
             {
                 Ok(()) => {
                     println!("Thank god, you managed to complete something")
