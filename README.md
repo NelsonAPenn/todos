@@ -28,11 +28,18 @@ todos under [id of indirect parent]
 Add the flag `--overwhelm` (or, equivalently, `-o`) to show all the todos, not just the leaves.
 - `add` command:
 ```bash
-todos add [node type (optional, default is a task)] "[description]"
+todos add [node type (optional, default is "task")] "[description]"
 ```
 or to go ahead and add the node to a parent,
 ```bash
-todos add [node type (optional, default is a task)] "[description]" to [id of direct parent to be]
+todos add [node type (optional, default is "task")] "[description]" to [id of direct parent to be]
+# or
+todos add [node type (optional, default is "task")] "[description]" under [id of direct parent to be]
+```
+
+or to insert a node as the direct parent of another,
+```bash
+todos add [node type (optional, default is "task")] "[description]" above [id of direct child to be]
 ```
 - `complete` command:
 ```bash
@@ -46,6 +53,13 @@ todos link [id of direct parent to be] [id of direct child to be]
 - `unlink` command: for if you change your mind about the structure of your dependency DAG.
 ```bash
 todos unlink [id of direct parent] [id of direct child]
+```
+
+- `edit` command: to change the description of a node.
+```bash
+todos edit [id of node] [new description]
+# or 
+todos relabel [id of node] [new description]
 ```
 
 ## Upcoming changes

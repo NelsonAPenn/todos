@@ -120,7 +120,7 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
 
 
                 },
-                "before" | "above" => {
+                "above" => {
                     let id = arg_list.pop_front()?.parse::<usize>().ok()?;
                     if !arg_list.is_empty()
                     {
@@ -186,7 +186,7 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
                 overwhelm: overwhelm
             });
         }
-        "edit" =>
+        "edit" | "relabel" =>
         {
             let id = arg_list.pop_front()?.parse::<usize>().ok()?;
             let description = arg_list.pop_front()?;
