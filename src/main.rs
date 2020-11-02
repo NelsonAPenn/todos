@@ -190,6 +190,10 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
         {
             let id = arg_list.pop_front()?.parse::<usize>().ok()?;
             let description = arg_list.pop_front()?;
+            if !arg_list.is_empty()
+            {
+                return None;
+            }
             return Some(Command::Edit{
                 id: id,
                 new_description: description
