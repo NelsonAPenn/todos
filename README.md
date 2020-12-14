@@ -5,7 +5,8 @@ Rust-based CLI todos tracker based on a dependency tree of todos (or rather, a d
 The idea behind this project is to show you only the tasks on your list that you can complete at the moment. It is to help clear one's mind of the things they must do but are waiting on a condition or the completion of another task.
 
 ## Setup:
-Figure it out yourself until I try (maybe someday) to write directions. *Hint, change the paths in node.rs to your home folder and add the release-built executable to `/usr/local/bin`*
+
+Figure it out yourself until I try (maybe someday) to write directions. *Hint, if you're using \*nix, change the paths in node.rs to your home folder and add the release-built executable to `/usr/local/bin`*
 
 ## Types of Nodes
 
@@ -67,5 +68,7 @@ todos relabel [id of node] [new description]
 Contains mildly insulting messages. :)
 
 ## Upcoming changes
+- more configurability
+- a shell...?
 - deadlines
 - Zenity notifications for Ubuntu
