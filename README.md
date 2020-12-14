@@ -62,6 +62,10 @@ todos edit [id of node] [new description]
 todos relabel [id of node] [new description]
 ```
 
+## Disclaimer
+
+Contains mildly derogatory error messages.
+
 ## Upcoming changes
 - deadlines
 - Zenity notifications for Ubuntu
