@@ -13,8 +13,10 @@ Figure it out yourself until I try (maybe someday) to write directions. *Hint, i
 There are three types of nodes:
 
 - `goal`: always shown when displaying todos. Acts as a sort of category or long-term goal. Used for grouping todos. Can be nested.
-- `condition`: used to indicate something you're waiting on
-- `task`: a todo
+  - (i.e. "work", "college", "personal projects", "being a responsible person", etc.)
+- `condition`: used to indicate something you're waiting on -- something you cannot do, only tell when it's done
+  - (i.e. "Jeff has messaged me back", "It's August", etc.)
+- `task`: an actionable todo
 
 ## Usage:
 
