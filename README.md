@@ -64,7 +64,7 @@ todos relabel [id of node] [new description]
 
 ## Disclaimer
 
-Contains mildly derogatory error messages.
+Contains mildly insulting error messages. :)
 
 ## Upcoming changes
 - deadlines
