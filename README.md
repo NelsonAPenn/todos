@@ -15,7 +15,7 @@ Figure it out yourself until I try (maybe someday) to write directions.
   - change the paths in `node.rs` to your home folder
   - build the project with `cargo build --release`
   - copy the release-built executable to `/usr/local/bin`.
-  - if you are installing this for the first time: `~/.todos < echo "[]"`. If you're updating, skip this step (until I change the directory structure)
+  - if you are installing this for the first time: `echo "[]" > ~/.todos`. If you're updating, skip this step (until I change the directory structure)
 
 ## Types of Nodes
 
