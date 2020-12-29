@@ -15,7 +15,7 @@ The idea behind this project is to show you only the tasks on your list that you
 
 - *nix / MacOS:
   1. Clone the repo
-  2. Whenever you want to update, run `update_or_install.sh` 
+  2. Whenever you want to update, `cd` into the repo and run `update_or_install.sh` 
 
 - Windows
   1. Clone the repo
