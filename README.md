@@ -22,7 +22,7 @@ The idea behind this project is to show you only the tasks on your list that you
   2. Read `update_or_uninstall.sh`
   3. Whenever you want to update, try to do the same thing `update_or_uninstall.sh` does manually! :)
 
-Configure console colors (more configurations coming soon) in `~/.todos/config.toml`. Supports basic ANSI color codes.
+Configure console colors (more configurations coming soon) in `~/.todos/config.toml`. Supports basic ANSI color codes (i.e. bold blue "01;94", RGB orange "38;2;255;127;0").
 
 ## Types of Nodes
 
