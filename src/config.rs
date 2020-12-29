@@ -14,11 +14,6 @@ pub struct Config {
 
 impl Config
 {
-    fn color_is_valid(color: &String) -> bool
-    {
-        true
-    }
-
 }
 
 impl Default for Config
@@ -36,32 +31,17 @@ impl Default for Config
 
 pub fn read_config_file(path: PathBuf) -> Config {
     let config_opt = fs::read_to_string(path).ok().map(|content| {
-        let config: Config = toml::from_str(&content).unwrap();
+        let config: Option<Config> = toml::from_str(&content).ok();
         config
-    });
+    }).flatten();
 
-    get_validated_config(config_opt)
-}
-
-fn get_validated_config(config_opt: Option<Config>) -> Config
-{
     if let Some(config) = config_opt
     {
-        if
-            !Config::color_is_valid(&config.goal_color) ||
-            !Config::color_is_valid(&config.condition_color) ||
-            !Config::color_is_valid(&config.task_color)
-        {
-            Config::default()
-        }
-        else
-        {
-            config
-        }
+        config
     }
     else
     {
+        println!("\x1B[1;42m Invalid config file, providing defaults.\x1B[00m");
         Config::default()
     }
-
 }
