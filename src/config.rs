@@ -7,9 +7,6 @@ use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
-    #[serde(skip_deserializing)]
-    pub root_directory: String,
-
     pub goal_color: String,
     pub condition_color: String,
     pub task_color: String
@@ -30,7 +27,6 @@ impl Default for Config
     {
         Config
         {
-            root_directory: String::from("~/.todos"),
             goal_color: String::from("01;94"),
             condition_color: String::from("01;33"),
             task_color: String::from("0;39")

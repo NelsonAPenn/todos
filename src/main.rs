@@ -1,12 +1,14 @@
-// #[macro_use] extern crate num_derive;
+extern crate dirs;
 
 mod node;
+mod graph;
 mod config;
-mod home;
 
-use node::{NodeType, Node, Graph};
+use node::{NodeType, Node};
+use graph::Graph;
 use std::env;
 use std::collections::VecDeque;
+use std::path::{Path, PathBuf};
 
 
 pub enum Command
@@ -57,7 +59,14 @@ fn main()
 {
     let mut args: VecDeque<String> = env::args().collect();
     args.pop_front();
-    let mut graph = Graph::load();
+
+    let home_dir = dirs::home_dir().unwrap();
+    let root_path = Path::new(&home_dir).join(".todos");
+    let todos_file = root_path.join("todos");
+    let config_path = root_path.join("config.toml");
+
+    let config = config::read_config_file(config_path);
+    let mut graph = Graph::load(todos_file, config);
 
     match get_command(&mut args) 
     {
@@ -66,6 +75,9 @@ fn main()
     }
     graph.save();
 }
+
+
+
 fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
 {
     let short = String::from("-o");
@@ -232,7 +244,7 @@ fn parse_command(command: Command, graph: &mut Graph)
             {
                 Ok(id) => {
                     println!("Ha! Your workload just got a little bigger. Node added:"); 
-                    graph.nodes[id].print(1);
+                    graph.print_node(id, 1).unwrap();
 
                 },
                 Err(message) => {
@@ -272,7 +284,7 @@ fn parse_command(command: Command, graph: &mut Graph)
                     {
                         Ok(()) => {
                             println!("Ha! Your workload just got a little bigger. Node added:"); 
-                            graph.nodes[id].print(1);
+                            graph.print_node(id, 1).unwrap();
                         },
                         Err(message) => {
                             println!("{}", message);
