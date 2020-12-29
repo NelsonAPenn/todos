@@ -8,14 +8,16 @@ The idea behind this project is to show you only the tasks on your list that you
 
 ## Setup:
 
-Figure it out yourself until I try (maybe someday) to write directions.
+- *nix / MacOS:
+  1. Clone the repo
+  2. Whenever you want to update, run `update_or_install.sh` 
 
-**Hint**
-- if you're using \*nix:
-  - change the paths in `node.rs` to your home folder
-  - build the project with `cargo build --release`
-  - copy the release-built executable to `/usr/local/bin`.
-  - if you are installing this for the first time: `echo "[]" > ~/.todos`. If you're updating, skip this step (until I change the directory structure)
+- Windows
+  1. Clone the repo
+  2. Read `update_or_uninstall.sh`
+  3. Whenever you want to update, try to do the same thing `update_or_uninstall.sh` does manually! :)
+
+Configure console colors (more configurations coming soon) in `~/.todos/config.toml`. Supports basic ANSI color codes.
 
 ## Types of Nodes
 
@@ -79,7 +81,5 @@ todos relabel [id of node] [new description]
 Contains mildly insulting messages. :)
 
 ## Upcoming changes
-- more configurability
 - a shell...?
 - deadlines
-- Zenity notifications for Ubuntu

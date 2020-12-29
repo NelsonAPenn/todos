@@ -8,7 +8,7 @@ use node::{NodeType, Node};
 use graph::Graph;
 use std::env;
 use std::collections::VecDeque;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 
 pub enum Command

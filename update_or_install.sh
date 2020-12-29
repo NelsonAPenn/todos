@@ -41,3 +41,4 @@ fi
 git pull
 cargo build --release
 sudo cp "target/release/todos" "/usr/local/bin"
+cp "$repo_dir/version" "$install_root"
