@@ -1,9 +1,13 @@
 // #[macro_use] extern crate num_derive;
 
 mod node;
+mod config;
+mod home;
+
 use node::{NodeType, Node, Graph};
 use std::env;
 use std::collections::VecDeque;
+
 
 pub enum Command
 {
@@ -53,13 +57,14 @@ fn main()
 {
     let mut args: VecDeque<String> = env::args().collect();
     args.pop_front();
-    let mut g = Graph::load("/home/nelson/.todos", node::StorageVersion::Json);
+    let mut graph = Graph::load();
+
     match get_command(&mut args) 
     {
-        Some(command) => { parse_command(command, &mut g) },
+        Some(command) => { parse_command(command, &mut graph) },
         None => { println!("Invalid command."); }
     }
-    g.save();
+    graph.save();
 }
 fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
 {

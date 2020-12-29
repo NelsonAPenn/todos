@@ -1,24 +1,18 @@
-extern crate num;
 extern crate serde_json;
 extern crate serde;
 
+
+use crate::config::{Config, read_config_file};
 use std::fmt;
 use std::fs;
+use std::path::Path;
 use std::result::Result as Result;
 use std::io::prelude::*;
 use std::fs::File;
-use num_traits::{FromPrimitive};
-use num_derive::{FromPrimitive, ToPrimitive};    
-use std::io::BufReader;
 use serde::{Serialize, Deserialize};
+use crate::home::get_home_directory;
 
-pub enum StorageVersion
-{
-    Json,
-    HalfCsv
-}
-
-#[derive(Clone, Serialize, Deserialize, ToPrimitive, FromPrimitive)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum NodeType
 {
     Task,
@@ -61,15 +55,6 @@ pub struct Node
     pub parents: Vec<usize>
 }
 
-impl fmt::Display for Node
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
-    {
-        write!(f, "{},{},{},{},{}", self.id, self.description, num::ToPrimitive::to_usize(&self.node_type).unwrap(), self.deps.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" "), self.parents.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" "))
-    }
-
-}
-
 impl Node
 {
     pub fn print(&self, level: u128)
@@ -98,69 +83,32 @@ pub struct Graph
     pub nodes: Vec<Node>,
 
     #[serde(skip_serializing, skip_deserializing)]
-    location: String 
+    config: Config 
 }
 
 #[allow(dead_code)]
 impl Graph
 {
-    pub fn load(filename: &str, version: StorageVersion) ->  Graph
+    pub fn load() ->  Graph
     {
-        let mut graph = match version
-        {
-            StorageVersion::Json => serde_json::from_str(fs::read_to_string(&filename).unwrap().as_str()).unwrap(),
-            StorageVersion::HalfCsv => Graph::load_from_half_csv(filename)
-        };
-        graph.location = String::from(filename);
+        let home_dir = get_home_directory();
+        let root_path = Path::new(&home_dir).join(".todos");
+
+        println!("{:?}", root_path.join("todos").canonicalize().unwrap());
+
+        let mut graph: Graph = serde_json::from_str(
+            fs::read_to_string(&root_path.join("todos").canonicalize().unwrap())
+                .unwrap()
+                .as_str()
+            ).unwrap();
+        graph.config = read_config_file(root_path.join("config.toml"));
+        graph.config.root_directory = root_path.to_path_buf().into_os_string().into_string().unwrap();
+
+        println!("{}", graph.config.root_directory);
+
         graph
     }
 
-    pub fn load_from_half_csv(filename: &str) -> Graph
-    {
-        let mut nodes:Vec<Node> = Vec::<Node>::new();
-        let f = match File::open(filename) {
-            Ok(file) => file,
-            Err(_error) => {panic!("Unable to open file")}
-        };
-        let f = BufReader::new(f);
-        for line in f.lines()
-        {
-            let unwrapped = line.unwrap();
-            let split: Vec<&str> = unwrapped.split(",").collect();
-
-            assert_eq!(split.len(), 5);
-            let id = split[0].trim().parse::<usize>().unwrap();
-            let description = String::from(split[1]);
-            let node_type:NodeType = FromPrimitive::from_usize(split[2].trim().parse::<usize>().unwrap()).unwrap();
-            let deps:Vec<usize> = match split[3].trim(){
-                "" => Vec::<usize>::new(),
-                _ => split[3].split(" ").map(|x| x.trim().parse::<usize>().unwrap()).collect()
-            };
-            let parents:Vec<usize> = match split[4].trim(){
-                "" => Vec::<usize>::new(),
-                _ => split[4].split(" ").map(|x| x.trim().parse::<usize>().unwrap()).collect()
-            };
-            nodes.push(Node{
-                id: id,
-                description: description,
-                node_type: node_type,
-                due_date: None,
-                deps: deps,
-                parents: parents
-            });
-
-        }
-        let graph = Graph {
-            nodes: nodes,
-            location: String::from("")
-        };
-        match graph.validate()
-        {
-            Ok(()) => {},
-            Err(message) => { panic!(message) }
-        };
-        graph
-    }
     pub fn validate(&self) -> Result<(), String>
     {
         // check indices/ ids are all within bounds
@@ -458,7 +406,7 @@ impl Graph
     }
     pub fn save(&self)
     {
-        let mut f = match File::create(&self.location.as_str()) {
+        let mut f = match File::create(&Path::new(&self.config.root_directory).join("todos")) {
             Ok(file) => file,
             Err(_error) => {panic!("Unable to open file")}
         };
