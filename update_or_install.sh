@@ -2,35 +2,39 @@
 
 set -o errexit # if it messes up once, stop immediately!
 
+# test for cargo and git
+
+cargo=$(which cargo)
+git=$(which git)
+
+if [ ! -x "$cargo" ] || [ ! -x "$git" ] ; then
+  echo "Toolchain not installed"
+  exit 1
+fi
+
 # get necessary paths
 repo_dir=$(pwd)
-echo "$repo_dir"
 
 cd ~
 install_root="$(pwd)/.todos"
 cd "$repo_dir"
 
 
-if test -f "$install_root"; then
-  echo "Converting to new format"
-elif test -d "$install_root"; then
-  # update
+if test -d "$install_root"; then
   echo "Updating"
 else
   # install fresh
 
   # create todos directory
   mkdir -p "$install_root" 
-  echo "[]" > "$install_root/todos"
+  echo "{\"nodes\":[]}" > "$install_root/todos"
  
   # create config.toml
   echo "\
-root_directory = \"$install_root\" # don't change this
 goal_color = \"1;94\"
 condition_color = \"1;33\"
-goal_color = \"0;37\"\
+task_color = \"0;37\"\
   " > "$install_root/config.toml"
-
 
 fi
 
