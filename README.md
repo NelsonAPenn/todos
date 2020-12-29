@@ -6,6 +6,11 @@ The idea behind this project is to show you only the tasks on your list that you
 
 ![so long and thanks for all the fish](res/example.png)
 
+## Requirements
+
+- `git`
+- `cargo` / `rust` toolchain
+
 ## Setup:
 
 - *nix / MacOS:
