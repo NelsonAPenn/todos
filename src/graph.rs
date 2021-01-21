@@ -352,6 +352,7 @@ impl Graph
         };
 
         write!(f, "{}", serde_json::to_string(&self).unwrap()).unwrap();
+        self.config.save();
     }
 
     pub fn print_node(&self, id: usize, level: u128) -> Result<(), String>
