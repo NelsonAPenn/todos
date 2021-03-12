@@ -289,8 +289,14 @@ impl Graph
         self.nodes[*child].parents.retain( |x| *x != *parent);
         Ok(())
     }
-    pub fn show(&self, parent: &usize, mut level: u128, overwhelm: bool)
+    pub fn show(&self, parent: &usize, mut level: u128, overwhelm: bool) -> Result<(), String>
     {
+        match self.nodes.get(*parent)
+        {
+            None => { return Err(format!("Node with id {} not present in todos.", parent).to_string()); },
+            _ => {}
+
+        }
         match self.nodes[*parent].node_type
         {
             NodeType::Goal => {
@@ -320,8 +326,10 @@ impl Graph
         }
         for child in &self.nodes[*parent].deps
         {
-            self.show(child, level, overwhelm);
+            self.show(child, level, overwhelm).unwrap();
         }
+        
+        Ok(())
 
     }
     pub fn relabel(&mut self, id: usize, new_description: String) -> Result<(), String>
@@ -340,7 +348,7 @@ impl Graph
         {
             if node.parents.is_empty() 
             {
-                self.show(&node.id, 0, overwhelm);
+                self.show(&node.id, 0, overwhelm).unwrap();
             }
         }
     }

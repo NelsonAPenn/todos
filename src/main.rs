@@ -336,7 +336,13 @@ fn parse_command(command: Command, graph: &mut Graph)
             graph.todos(overwhelm);
         },
         Command::Under { id, overwhelm } => {
-            graph.show(&id, 0, overwhelm)
+            match graph.show(&id, 0, overwhelm)
+            {
+                Err(message) => {
+                    println!("{}", message);
+                },
+                _ => {}
+            }
         },
         Command::Edit { id, new_description } => 
         {
