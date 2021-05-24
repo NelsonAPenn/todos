@@ -153,15 +153,37 @@ impl Graph
             Err(message) => { panic!("Added crappy node and couldn't properly get rid of it!!!\n Error: {}", message); } 
         }
     }
+
+
     pub fn remove_node(&mut self, index: usize, recurse: bool) -> Result<(), String>
     {
-        match self.nodes.get(index)
+        self.batch_remove(vec![index], recurse)
+    }
+
+    pub fn batch_remove(&mut self, indices: Vec<usize>, recurse: bool) -> Result<(), String>
+    {
+        let mut error = None;
+
+        for index in indices.iter()
         {
-            None => { return Err(format!("Node with id {} not present in todos.", index).to_string()); },
-            _ => {}
+            match self.nodes.get(*index)
+            {
+                None => {
+                    let new_error_text = format!("Node with id {} not present in todos.\n", index);
+                    if let Some(msg) = error
+                    {
+                        error = Some(msg + &new_error_text[..]);
+                    }
+                    else
+                    {
+                        error = Some(new_error_text);
+                    }
+                },
+                _ => { self.inner_remove(index.clone(), recurse); }
+            }
+
         }
 
-        self.inner_remove(index.clone(), recurse);
 
         let invalid_val = self.nodes.len().clone();
         //remove invalid nodes
@@ -172,11 +194,21 @@ impl Graph
         {
             self.rename_node(&self.nodes[i].id.clone(), &i);
         }
+
+
         // but if it messes up your graph, then panic
-        match self.validate()
+        if let Err(message) = self.validate()
         {
-            Ok(()) => { return Ok(()); },
-            Err(message) => { panic!(message); } 
+            panic!(message);
+        }
+
+        if let Some(msg) = error
+        {
+            Err(msg)
+        }
+        else
+        {
+            Ok(())
         }
     }
 
@@ -217,6 +249,7 @@ impl Graph
         // mark node for deletion
         self.nodes[index].id = self.nodes.len();
     }
+
     pub fn check_topology(&self) -> Result<(), String>
     {
         let mut g = self.clone();

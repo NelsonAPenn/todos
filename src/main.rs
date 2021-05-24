@@ -27,7 +27,7 @@ pub enum Command
     },
     Complete
     {
-        id: usize
+        node_ids: Vec<usize>
     },
     Link
     {
@@ -156,15 +156,21 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
 
         },
         "complete" => {
-            let id = arg_list.pop_front()?.parse::<usize>().ok()?;
-            if !arg_list.is_empty()
-            {
-                return None;
-            }
-            return Some(Command::Complete{
-                id: id
-            });
+            let mut node_ids = vec![];
 
+            while let Some(token) = arg_list.pop_front()
+            {
+                node_ids.push(token.parse().ok()?);
+            }
+
+            if node_ids.is_empty()
+            {
+                None
+            }
+            else
+            {
+                Some(Command::Complete{node_ids})
+            }
         },
         "link" => {
             let parent = arg_list.pop_front()?.parse::<usize>().ok()?;
@@ -299,14 +305,14 @@ fn parse_command(command: Command, graph: &mut Graph)
             }
 
         },
-        Command::Complete { id } => {
-            match graph.remove_node(id, true)
+        Command::Complete { node_ids } => {
+            match graph.batch_remove(node_ids, true)
             {
                 Ok(()) => {
                     println!("Thank god, you managed to complete something")
                 },
                 Err(message) => {
-                    println!("{}", message);
+                    print!("{}", message);
                 }
             }
         },
