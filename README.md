@@ -93,7 +93,7 @@ todos relabel [id of node] [new description]
 
 ## Disclaimer
 
-Contains mildly insulting messages. :)
+Because it was written originally for myself, this app contains mildly insulting messages. :)
 
 ## Upcoming changes
 - a shell...?
