@@ -4,7 +4,7 @@ Rust-based CLI todos tracker based on a dependency tree of todos (or rather, a d
 
 The idea behind this project is to show you only the tasks on your list that you can complete at the moment. It is to help clear one's mind of the things they must do but are waiting on a condition or the completion of another task.
 
-![Don't worry, many of these items have been completed since taking this screenshot.](res/example.png)
+![super informative alt text](res/example.png "Don't worry, many of these items have been completed since taking this screenshot.")
 
 ## Requirements
 
