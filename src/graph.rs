@@ -15,7 +15,8 @@ use std::path::PathBuf;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Graph
 {
-    pub nodes: Vec<Node>,
+    effective_root: Option<usize>,
+    nodes: Vec<Node>,
 
     #[serde(skip_serializing, skip_deserializing)]
     todos_file: PathBuf,
@@ -100,7 +101,57 @@ impl Graph
         }
         return Ok(());
     }
-    pub fn add_node(&mut self, n: Node) -> Result<usize, String>
+
+    pub fn add_node_to(&mut self, description: String, node_type: NodeType, to: Option<usize>) -> Result<usize, String>
+    {
+        let n = Node
+        {
+            id:0,
+            description: description,
+            node_type: node_type,
+            due_date: None,
+            deps: Vec::<usize>::new(),
+            parents: match to {
+                Some(val) => vec![val],
+                None => Vec::<usize>::new()
+            }
+        };
+
+        self.add_node(n)
+    }
+
+    pub fn add_node_above(&mut self, description: String, node_type: NodeType, above: usize) -> Result<usize, String>
+    {
+        let node_to_shift = &self.nodes[above];
+        let parents = node_to_shift.parents.clone();
+
+        // unlink all references above node 'above'
+        for parent in &parents
+        {
+            match self.unlink(&parent, &above){
+                Ok(()) => {},
+                Err(message) => {
+                    panic!(message);
+                }
+            }
+        }
+
+        let n = Node
+        {
+            id:0,
+            description: description,
+            node_type: node_type,
+            due_date: None,
+            deps: vec![above],
+            parents: parents
+        };
+
+        let id = self.add_node(n)?;
+        self.link(&id, &above).map(|_x| id)
+    }
+
+
+    fn add_node(&mut self, n: Node) -> Result<usize, String>
     {
         let id_to_return: usize = self.nodes.len();
         // if it don't work, don't panic
@@ -279,7 +330,7 @@ impl Graph
         {
             if !node.parents.is_empty() || !node.deps.is_empty()
             {
-                return Err("Idiot. Haven't you heard of a DAG before?".to_string());
+                return Err("Idiot. Haven't you heard of a DAG above?".to_string());
             }
         }
         return Ok(());
@@ -322,11 +373,44 @@ impl Graph
         self.nodes[*child].parents.retain( |x| *x != *parent);
         Ok(())
     }
+
+    pub fn todos(&self, overwhelm: bool)
+    {
+        if let Some(root) = self.effective_root
+        {
+            self.show(&root, 0, overwhelm).unwrap();
+        }
+        else
+        {
+            for node in &self.nodes
+            {
+                if node.parents.is_empty() 
+                {
+                    self.show(&node.id, 0, overwhelm).unwrap();
+                }
+            }
+        }
+    }
+
+    pub fn set_effective_root(&mut self, node_id: Option<usize>) -> Result<(), String>
+    {
+        if let Some(ref id) = node_id
+        {
+            if let None = self.nodes.get(*id)
+            {
+                return Err(format!("Node with id {} not present in todos.", id));
+            }
+        }
+
+        self.effective_root = node_id;
+        Ok(())
+    }
+
     pub fn show(&self, parent: &usize, mut level: u128, overwhelm: bool) -> Result<(), String>
     {
         match self.nodes.get(*parent)
         {
-            None => { return Err(format!("Node with id {} not present in todos.", parent).to_string()); },
+            None => { return Err(format!("Node with id {} not present in todos.", parent)); },
             _ => {}
 
         }
@@ -374,16 +458,6 @@ impl Graph
         }
         self.nodes[id].description = new_description;
         Ok(())
-    }
-    pub fn todos(&self, overwhelm: bool)
-    {
-        for node in &self.nodes
-        {
-            if node.parents.is_empty() 
-            {
-                self.show(&node.id, 0, overwhelm).unwrap();
-            }
-        }
     }
     pub fn save(&self)
     {

@@ -12,8 +12,7 @@ pub struct Config {
 
     pub goal_color: String,
     pub condition_color: String,
-    pub task_color: String,
-    pub goal_in_use: Option<usize>
+    pub task_color: String
 }
 
 impl Config
@@ -44,8 +43,7 @@ impl Default for Config
 
             goal_color: String::from("01;94"),
             condition_color: String::from("01;33"),
-            task_color: String::from("0;39"),
-            goal_in_use: None
+            task_color: String::from("0;39")
         }
     }
 }

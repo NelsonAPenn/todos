@@ -4,7 +4,7 @@ mod node;
 mod graph;
 mod config;
 
-use node::{NodeType, Node};
+use node::{NodeType};
 use graph::Graph;
 use std::env;
 use std::collections::VecDeque;
@@ -19,11 +19,11 @@ pub enum Command
         node_type: NodeType,
         to: Option<usize>,
     },
-    NewBefore
+    NewAbove
     {
         description: String,
         node_type: NodeType,
-        before: usize,
+        above: usize,
     },
     Complete
     {
@@ -47,6 +47,10 @@ pub enum Command
     {
         id: usize,
         overwhelm: bool
+    },
+    Use
+    {
+        effective_root: Option<usize>
     },
     Edit
     {
@@ -143,10 +147,10 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
                     {
                         return None;
                     }
-                    return Some(Command::NewBefore{
+                    return Some(Command::NewAbove{
                         node_type: node_type,
                         description: description,
-                        before: id
+                        above: id
                     });
                 },
                 _ => {
@@ -209,6 +213,23 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
                 overwhelm: overwhelm
             });
         }
+        "use" =>
+        {
+            let token = arg_list.pop_front()?;
+            let effective_root = match &token[..]
+            {
+                "root" => { None },
+                _ => {
+                    Some(token.parse().ok()?)
+                }
+            };
+
+            if !arg_list.is_empty()
+            {
+                return None;
+            }
+            return Some(Command::Use{ effective_root });
+        }
         "edit" | "relabel" =>
         {
             let id = arg_list.pop_front()?.parse::<usize>().ok()?;
@@ -234,19 +255,7 @@ fn parse_command(command: Command, graph: &mut Graph)
     match command
     {
         Command::New { description, node_type, to } => {
-            let n = Node
-            {
-                id:0,
-                description: description,
-                node_type: node_type,
-                due_date: None,
-                deps: Vec::<usize>::new(),
-                parents: match to {
-                    Some(val) => vec![val],
-                    None => Vec::<usize>::new()
-                }
-            };
-            match graph.add_node(n)
+            match graph.add_node_to(description, node_type, to)
             {
                 Ok(id) => {
                     println!("Ha! Your workload just got a little bigger. Node added:"); 
@@ -258,46 +267,13 @@ fn parse_command(command: Command, graph: &mut Graph)
                 }
             }
         },
-        Command::NewBefore { description, node_type, before } => {
-            let node_to_shift = &graph.nodes[before];
-            let parents = node_to_shift.parents.clone();
-            // unlink all references before node 'before'
-            for parent in &parents
-            {
-                match graph.unlink(&parent, &before){
-                    Ok(()) => {},
-                    Err(message) => {
-                        panic!(message);
-                    }
-                }
-                
-            }
+        Command::NewAbove { description, node_type, above } => {
 
-            let n = Node
-            {
-                id:0,
-                description: description,
-                node_type: node_type,
-                due_date: None,
-                deps: vec![before],
-                parents: parents
-            };
-
-            match graph.add_node(n)
+            match graph.add_node_above(description, node_type, above)
             {
                 Ok(id) => {
-                    match graph.link(&id, &before)
-                    {
-                        Ok(()) => {
-                            println!("Ha! Your workload just got a little bigger. Node added:"); 
-                            graph.print_node(id, 1).unwrap();
-                        },
-                        Err(message) => {
-                            println!("{}", message);
-                        }
-
-                    }
-
+                    println!("Ha! Your workload just got a little bigger. Node added:"); 
+                    graph.print_node(id, 1).unwrap();
                 },
                 Err(message) => {
                     println!("{}", message);
@@ -348,6 +324,24 @@ fn parse_command(command: Command, graph: &mut Graph)
                     println!("{}", message);
                 },
                 _ => {}
+            }
+        },
+        Command::Use { effective_root } => {
+            match graph.set_effective_root(effective_root)
+            {
+                Err(message) => {
+                    println!("{}", message);
+                },
+                _ => {
+                    if let Some(effective_root) = effective_root
+                    {
+                        println!("Now using {}.", effective_root);
+                    }
+                    else
+                    {
+                        println!("Now using root.");
+                    }
+                }
             }
         },
         Command::Edit { id, new_description } => 
