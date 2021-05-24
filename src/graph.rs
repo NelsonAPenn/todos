@@ -113,7 +113,16 @@ impl Graph
             deps: Vec::<usize>::new(),
             parents: match to {
                 Some(val) => vec![val],
-                None => Vec::<usize>::new()
+                None => {
+                    if let Some(effective_root) = self.effective_root
+                    {
+                        vec![effective_root]
+                    }
+                    else
+                    {
+                        Vec::<usize>::new()
+                    }
+                }
             }
         };
 
