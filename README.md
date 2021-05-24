@@ -38,6 +38,8 @@ There are three types of nodes:
 
 - show todos:
 ```bash
+# This shows all todos under the current effective root ("root", the hidden root of all nodes by default.)
+# See `todos use` for more
 todos
 ```
 or, to only display nodes that are an indirect dependency of another
@@ -47,6 +49,7 @@ todos under [id of indirect parent]
 Add the flag `--overwhelm` (or, equivalently, `-o`) to show all the todos, not just the leaves.
 - `add` command:
 ```bash
+# This adds a node to the effective root of the DAG.
 todos add [node type (optional, default is "task")] "[description]"
 ```
 or to go ahead and add the node to a parent,
@@ -62,7 +65,7 @@ todos add [node type (optional, default is "task")] "[description]" above [id of
 ```
 - `complete` command:
 ```bash
-todos complete [id of completed node]
+todos complete [id of completed node] [id of completed node] ... [id of completed node]
 ```
 Operates recursively, completing subtasks as well.
 - `link` command: for if you want a node you've already added to depend on or be depended on by another node.
@@ -72,6 +75,13 @@ todos link [id of direct parent to be] [id of direct child to be]
 - `unlink` command: for if you change your mind about the structure of your dependency DAG.
 ```bash
 todos unlink [id of direct parent] [id of direct child]
+```
+
+- `use` command: sets the effective root node to the desired node.
+```bash
+todos use root # the hidden root node, parent of all nodes
+# or
+todos use [id of new effective root] # a specific node in the DAG
 ```
 
 - `edit` command: to change the description of a node.
