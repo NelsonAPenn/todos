@@ -91,10 +91,14 @@ todos edit [id of node] [new description]
 todos relabel [id of node] [new description]
 ```
 
+- `shell` command: enter shell mode. In shell mode, all commands are identical except `todos` does not need to be prepended to the commands. You can use `<ctrl-d>` to exit the shell (just like any other shell).
+```bash
+todos shell
+```
+
 ## Disclaimer
 
 Because it was written originally for myself, this app contains mildly insulting messages. :)
 
 ## Upcoming changes
-- a shell...?
-- deadlines
+- timed conditions

@@ -9,6 +9,7 @@ use graph::Graph;
 use std::env;
 use std::collections::VecDeque;
 use std::path::Path;
+use std::io::{BufReader, BufRead, stdin};
 
 
 pub enum Command
@@ -56,7 +57,8 @@ pub enum Command
     {
         id: usize,
         new_description: String
-    }
+    },
+    Shell
 }
 
 fn main()
@@ -72,17 +74,56 @@ fn main()
     let config = config::read_config_file(config_path);
     let mut graph = Graph::load(todos_file, config);
 
-    match get_command(&mut args) 
+    match get_command(args) 
     {
-        Some(command) => { parse_command(command, &mut graph) },
+        Some(command) => { perform_command(command, &mut graph, false) },
         None => { println!("Invalid command."); }
     }
+
     graph.save();
+}
+
+fn shell_mode(graph: &mut Graph)
+{
+    let mut line = String::new();
+    let stdin = stdin();
+    let stdin = stdin.lock();
+    let mut reader = BufReader::new(stdin);
+
+    loop
+    {
+        // get line of input
+        let bytes_read = reader.read_line(&mut line).unwrap();
+        if bytes_read == 0
+        {
+            break;
+        }
+
+        // split line and parse to get_command
+        let args = line
+            .split_ascii_whitespace()
+            .map(|x| String::from(x))
+            .collect::<VecDeque<String>>();
+
+        match get_command(args) 
+        {
+            Some(command) => { perform_command(command, graph, true) },
+            None => { println!("Invalid command."); }
+        }
+
+        // could technically be moved outside of the loop; however,
+        // in the case of a crash, it is desirable to have the graph
+        // saved already.
+        graph.save();
+
+        line.clear();
+    }
+
 }
 
 
 
-fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
+fn get_command(mut arg_list: VecDeque<String>) -> Option<Command>
 {
     let short = String::from("-o");
     let long = String::from("--overwhelm");
@@ -243,6 +284,18 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
                 new_description: description
             });
         }
+        "shell" =>
+        {
+            if !arg_list.is_empty()
+            {
+                None
+            }
+            else
+            {
+                Some(Command::Shell)
+            }
+
+        }
         _ => {
             return None
         }
@@ -250,7 +303,7 @@ fn get_command(arg_list: &mut VecDeque<String>) -> Option<Command>
 
 }
 
-fn parse_command(command: Command, graph: &mut Graph)
+fn perform_command(command: Command, graph: &mut Graph, in_shell: bool)
 {
     match command
     {
@@ -350,6 +403,15 @@ fn parse_command(command: Command, graph: &mut Graph)
             {
                 Ok(()) => println!("Successfully relabeled node."),
                 Err(message) => println!("{}", message)
+            }
+        }
+        Command::Shell => 
+        {
+            // the following could be recursive if already in shell mode.
+            // However, this may not be an issue, as many shells are implemented as such.
+            if !in_shell
+            {
+                shell_mode(graph);
             }
         }
     }
