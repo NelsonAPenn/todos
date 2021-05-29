@@ -140,7 +140,7 @@ impl Graph
             match self.unlink(&parent, &above){
                 Ok(()) => {},
                 Err(message) => {
-                    panic!(message);
+                    panic!("{}", message);
                 }
             }
         }
@@ -202,7 +202,7 @@ impl Graph
             Err(_message) => {
                 match self.remove_node(self.nodes.len() - 1, false) {
                     Ok(()) => {},
-                    Err(message) => panic!(message)
+                    Err(message) => panic!("{}", message)
                 }
             } // try to remove last node
         }
@@ -259,7 +259,7 @@ impl Graph
         // but if it messes up your graph, then panic
         if let Err(message) = self.validate()
         {
-            panic!(message);
+            panic!("{}", message);
         }
 
         if let Some(msg) = error
