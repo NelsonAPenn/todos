@@ -436,10 +436,6 @@ impl Graph
             },
             _ => {
                 // only print tasks and conditions if they are leaves 
-                if overwhelm // nested structure if currently overwhelming the user
-                {
-                    level += 1
-                }
                 if overwhelm || self.nodes[*parent].deps.is_empty()
                 {
                     self.nodes[*parent].print(
@@ -447,6 +443,10 @@ impl Graph
                         &self.config.condition_color,
                         &self.config.task_color,
                         level);
+                }
+                if overwhelm // nested structure if currently overwhelming the user
+                {
+                    level += 1
                 }
             }
         }
