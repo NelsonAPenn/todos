@@ -5,7 +5,7 @@ extern crate serde_json;
 use std::fmt;
 use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum NodeType
 {
     Task,

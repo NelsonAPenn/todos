@@ -423,33 +423,22 @@ impl Graph
             _ => {}
 
         }
-        match self.nodes[*parent].node_type
+
+        if 
+            overwhelm || // print everything if overwhelming the user
+            self.nodes[*parent].node_type == NodeType::Goal || // always print goals
+            self.nodes[*parent].deps.is_empty() // always print leaves
         {
-            NodeType::Goal => {
-                // always print goals
-                self.nodes[*parent].print(
-                    &self.config.goal_color,
-                    &self.config.condition_color,
-                    &self.config.task_color,
-                    level);
-                level += 1;
-            },
-            _ => {
-                // only print tasks and conditions if they are leaves 
-                if overwhelm || self.nodes[*parent].deps.is_empty()
-                {
-                    self.nodes[*parent].print(
-                        &self.config.goal_color,
-                        &self.config.condition_color,
-                        &self.config.task_color,
-                        level);
-                }
-                if overwhelm // nested structure if currently overwhelming the user
-                {
-                    level += 1
-                }
-            }
+            self.nodes[*parent].print(
+                &self.config.goal_color,
+                &self.config.condition_color,
+                &self.config.task_color,
+                level);
+
+            // if the node was printed, then we increase the indentation for the children
+            level += 1;
         }
+
         for child in &self.nodes[*parent].deps
         {
             self.show(child, level, overwhelm).unwrap();
