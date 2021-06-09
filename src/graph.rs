@@ -244,8 +244,8 @@ impl Graph
 
         }
 
-
         let invalid_val = self.nodes.len().clone();
+
         //remove invalid nodes
         self.nodes.retain(|x| x.id != invalid_val);
 
@@ -315,6 +315,7 @@ impl Graph
         let mut g = self.clone();
         let mut out_edges = Vec::<usize>::new();
         let mut orphans = Vec::<usize>::new();
+
         for node in &g.nodes
         {
             if node.parents.len() == 0
@@ -322,6 +323,7 @@ impl Graph
                 orphans.push(node.id);
             }
         }
+
         while let Some(top) = orphans.pop()
         {
             out_edges.push(top.clone());
@@ -335,6 +337,7 @@ impl Graph
                 }
             }
         }
+
         for node in &g.nodes
         {
             if !node.parents.is_empty() || !node.deps.is_empty()
@@ -342,7 +345,8 @@ impl Graph
                 return Err("Idiot. Haven't you heard of a DAG above?".to_string());
             }
         }
-        return Ok(());
+
+        Ok(())
     }
     pub fn link(&mut self, parent: &usize, child: &usize) -> Result<(), String>
     {
@@ -387,7 +391,7 @@ impl Graph
     {
         if let Some(root) = self.effective_root
         {
-            self.show(&root, 0, overwhelm).unwrap();
+            self.show(&root, 0, overwhelm, Some(root)).unwrap();
         }
         else
         {
@@ -395,7 +399,7 @@ impl Graph
             {
                 if node.parents.is_empty() 
                 {
-                    self.show(&node.id, 0, overwhelm).unwrap();
+                    self.show(&node.id, 0, overwhelm, None).unwrap();
                 }
             }
         }
@@ -415,21 +419,16 @@ impl Graph
         Ok(())
     }
 
-    pub fn show(&self, parent: &usize, mut level: u128, overwhelm: bool) -> Result<(), String>
+    pub fn show(&self, parent: &usize, mut level: u128, overwhelm: bool, started_from: Option<usize>) -> Result<(), String>
     {
-        match self.nodes.get(*parent)
-        {
-            None => { return Err(format!("Node with id {} not present in todos.", parent)); },
-            _ => {}
-
-        }
+        let node = self.nodes.get(*parent).ok_or( format!("Node with id {} not present in todos.", parent))?;
 
         if 
             overwhelm || // print everything if overwhelming the user
-            self.nodes[*parent].node_type == NodeType::Goal || // always print goals
-            self.nodes[*parent].deps.is_empty() // always print leaves
+            node.node_type == NodeType::Goal || // always print goals
+            node.deps.is_empty() // always print leaves
         {
-            self.nodes[*parent].print(
+            node.print(
                 &self.config.goal_color,
                 &self.config.condition_color,
                 &self.config.task_color,
@@ -439,9 +438,17 @@ impl Graph
             level += 1;
         }
 
-        for child in &self.nodes[*parent].deps
+        // TODO: perhaps add name of backlog item into the config
+        if node.description == "backlog" && started_from != Some(*parent) 
         {
-            self.show(child, level, overwhelm).unwrap();
+            // if this is a backlog node and we did not start at this node,
+            // then hide its children
+            return Ok(())
+        }
+
+        for child in &node.deps
+        {
+            self.show(child, level, overwhelm, started_from).unwrap();
         }
         
         Ok(())
@@ -449,12 +456,8 @@ impl Graph
     }
     pub fn relabel(&mut self, id: usize, new_description: String) -> Result<(), String>
     {
-        match self.nodes.get(id)
-        {
-            None => { return Err(format!("Node with id {} doesn't exist.", id).to_string()); },
-            _ => {}
-        }
-        self.nodes[id].description = new_description;
+        let node = self.nodes.get_mut(id).ok_or( format!("Node with id {} not present in todos.", id))?;
+        node.description = new_description;
         Ok(())
     }
     pub fn save(&self)
@@ -465,7 +468,6 @@ impl Graph
         };
 
         write!(f, "{}", serde_json::to_string(&self).unwrap()).unwrap();
-        self.config.save();
     }
 
     pub fn print_node(&self, id: usize, level: u128) -> Result<(), String>

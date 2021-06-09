@@ -371,7 +371,7 @@ fn perform_command(command: Command, graph: &mut Graph, in_shell: bool)
             graph.todos(overwhelm);
         },
         Command::Under { id, overwhelm } => {
-            match graph.show(&id, 0, overwhelm)
+            match graph.show(&id, 0, overwhelm, Some(id))
             {
                 Err(message) => {
                     println!("{}", message);
