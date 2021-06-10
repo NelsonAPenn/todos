@@ -439,6 +439,7 @@ impl Graph
         }
 
         if
+            !overwhelm &&
             self.config.hide_backlog_items &&
             node.node_type == NodeType::Goal && 
             node.description == self.config.backlog_name &&
