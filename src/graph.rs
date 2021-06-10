@@ -438,8 +438,10 @@ impl Graph
             level += 1;
         }
 
-        // TODO: perhaps add name of backlog item into the config
-        if node.description == "backlog" && started_from != Some(*parent) 
+        if
+            self.config.hide_backlog_items &&
+            node.description == self.config.backlog_name &&
+            started_from != Some(*parent) 
         {
             // if this is a backlog node and we did not start at this node,
             // then hide its children

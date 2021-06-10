@@ -7,6 +7,8 @@ use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Config {
+    pub hide_backlog_items: bool,
+    pub backlog_name: String,
     pub goal_color: String,
     pub condition_color: String,
     pub task_color: String
@@ -20,7 +22,9 @@ impl Default for Config
         {
             goal_color: String::from("01;94"),
             condition_color: String::from("01;33"),
-            task_color: String::from("0;39")
+            task_color: String::from("0;39"),
+            hide_backlog_items: true,
+            backlog_name: String::from("backlog_name")
         }
     }
 }
