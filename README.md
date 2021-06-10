@@ -96,6 +96,27 @@ todos relabel [id of node] [new description]
 todos shell
 ```
 
+## Backlog
+
+It may be pleasant to hide the truth of just how much stuff you want to do and never get around to with a `backlog`. By default, any goal named `backlog` will hide its children. If you want to see its contents, you can either `use` it as the effective root or show only todos `under` it.
+
+This functionality can be disabled by setting `hide_backlog_items` to false in the config file. In addition, you can change the name from "backlog" to something else by editing `backlog_name`, also in the config file.
+
+
+## Config file
+
+The config file is installed in `~/.todos/config.toml`. At this point in time the config file must fit the following schema in TOML format:
+
+```
+  hide_backlog_items: bool,
+  backlog_name: String,
+  goal_color: String,
+  condition_color: String,
+  task_color: String
+```
+
+As things are, I have incorporated automatic updates of the config file in the update script. However, it is the least robust part of the application, and I do not guarantee it is perfect. It may be good to just take a look at the config file after updating to make sure it is how you want it to be.
+
 ## Disclaimer
 
 Because it was written originally for myself, this app contains mildly insulting messages. :)
