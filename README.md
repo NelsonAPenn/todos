@@ -98,7 +98,7 @@ todos shell
 
 ## Backlog
 
-It may be pleasant to hide the truth of just how much stuff you want to do and never get around to with a `backlog`. By default, any todo named `backlog` (of any `NodeType`) will hide its children. If you want to see its contents, you can either `use` it as the effective root or show only todos `under` it.
+It may be pleasant to hide the truth of just how much stuff you want to do and never get around to with a `backlog`. By default, any goal named `backlog` will hide its children. If you want to see its contents, you can either `use` it as the effective root or show only todos `under` it.
 
 This functionality can be disabled by setting `hide_backlog_items` to false in the config file. In addition, you can change the name from "backlog" to something else by editing `backlog_name`, also in the config file.
 
