@@ -13,16 +13,13 @@ git=$(command -v git)
 
 if [ ! -x "$cargo" ] || [ ! -x "$git" ] ; then
   echo "Toolchain not installed"
-  sync
   exit 1
 fi
 
 # get necessary paths
 repo_dir=$(pwd)
-starting_version=$(cat "$install_root/version")
-
 install_root="$HOME/.todos"
-
+starting_version=$(cat "$install_root/version")
 
 if test -d "$install_root"; then
   echo "Updating"
