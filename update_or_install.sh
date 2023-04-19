@@ -9,9 +9,8 @@ fi
 # test for cargo and git
 
 cargo=$(command -v cargo)
-git=$(command -v git)
 
-if [ ! -x "$cargo" ] || [ ! -x "$git" ] ; then
+if [ ! -x "$cargo" ] ; then
   echo "Toolchain not installed"
   exit 1
 fi
@@ -41,7 +40,6 @@ backlog_name = \"backlog\"\
 
 fi
 
-git pull
 # ending_version=$(cat version)
 
 # perform any necessary updates
@@ -52,10 +50,7 @@ backlog_name = \"backlog\"\
   " >> "$install_root/config.toml"
 fi
 
-
-
-cargo build --release
-sudo cp "target/release/todos" "/usr/local/bin"
+cargo install --path .
 cp "$repo_dir/version" "$install_root"
 
 echo "Enjoy your new or updated todos CLI!"

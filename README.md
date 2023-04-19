@@ -15,7 +15,10 @@ The idea behind this project is to show you only the tasks on your list that you
 
 - *nix / MacOS:
   1. Clone the repo
-  2. Whenever you want to update, `cd` into the repo and run `update_or_install.sh`
+  2. Whenever you want to update
+    - `cd` into repo root
+    - pull most recent changes, if any
+    - run `update_or_install.sh` (all this script does is run cargo install and handles breaking changes in todos storage file or configuration, if any.)
 
 - Windows
   1. Clone the repo

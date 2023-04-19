@@ -1,7 +1,11 @@
 #!/bin/bash
 rm -rf ~/.todos
 
-executable="/usr/local/bin/todos"
-if test -f "$executable"; then
-  sudo rm "$executable"
+cargo=$(command -v cargo)
+
+if [ ! -x "$cargo" ] ; then
+  echo "Toolchain not installed"
+  exit 1
 fi
+
+cargo uninstall todos
