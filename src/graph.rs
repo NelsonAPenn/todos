@@ -391,6 +391,18 @@ impl Graph
     {
         if let Some(root) = self.effective_root
         {
+            if self.nodes.get(root).is_none()
+            {
+                println!("\
+                    Effective root has been deleted; please select a new \
+                    effective root.\
+                    \n\ne.x.\
+                    \ntodos use 12\
+                    \nor\
+                    \ntodos use root\
+                ");
+                return;
+            }
             self.show(&root, 0, overwhelm, Some(root)).unwrap();
         }
         else
