@@ -22,7 +22,7 @@ pub struct Graph
     todos_file: PathBuf,
 
     #[serde(skip_serializing, skip_deserializing)]
-    config: Config 
+    config: Config
 }
 
 #[allow(dead_code)]
@@ -210,7 +210,7 @@ impl Graph
         match self.validate()
         {
             Ok(()) => { return Ok(id_to_return); },
-            Err(message) => { panic!("Added crappy node and couldn't properly get rid of it!!!\n Error: {}", message); } 
+            Err(message) => { panic!("Added crappy node and couldn't properly get rid of it!!!\n Error: {}", message); }
         }
     }
 
@@ -293,7 +293,7 @@ impl Graph
 
         if recurse
         {
-            for node in to_remove 
+            for node in to_remove
             {
                 self.inner_remove(node, recurse);
             }
@@ -409,7 +409,7 @@ impl Graph
         {
             for node in &self.nodes
             {
-                if node.parents.is_empty() 
+                if node.parents.is_empty()
                 {
                     self.show(&node.id, 0, overwhelm, None).unwrap();
                 }
@@ -435,7 +435,7 @@ impl Graph
     {
         let node = self.nodes.get(*parent).ok_or( format!("Node with id {} not present in todos.", parent))?;
 
-        if 
+        if
             overwhelm || // print everything if overwhelming the user
             node.node_type == NodeType::Goal || // always print goals
             node.deps.is_empty() // always print leaves
@@ -453,9 +453,9 @@ impl Graph
         if
             !overwhelm &&
             self.config.hide_backlog_items &&
-            node.node_type == NodeType::Goal && 
+            node.node_type == NodeType::Goal &&
             node.description == self.config.backlog_name &&
-            started_from != Some(*parent) 
+            started_from != Some(*parent)
         {
             // if this is a backlog node and we did not start at this node,
             // then hide its children
@@ -466,7 +466,7 @@ impl Graph
         {
             self.show(child, level, overwhelm, started_from).unwrap();
         }
-        
+
         Ok(())
 
     }

@@ -74,7 +74,7 @@ fn main()
     let config = config::read_config_file(config_path);
     let mut graph = Graph::load(todos_file, config);
 
-    match get_command(args) 
+    match get_command(args)
     {
         Some(command) => { perform_command(command, &mut graph, false) },
         None => { println!("Invalid command."); }
@@ -105,7 +105,7 @@ fn shell_mode(graph: &mut Graph)
             .map(|x| String::from(x))
             .collect::<VecDeque<String>>();
 
-        match get_command(args) 
+        match get_command(args)
         {
             Some(command) => { perform_command(command, graph, true) },
             None => { println!("Invalid command."); }
@@ -142,7 +142,7 @@ fn get_command(mut arg_list: VecDeque<String>) -> Option<Command>
     {
         "add" => {
             // read type (default = task)
-            let node_type = 
+            let node_type =
             if let Some(provided) = NodeType::from_string(arg_list.front()?)
             {
                 arg_list.pop_front();
@@ -311,7 +311,7 @@ fn perform_command(command: Command, graph: &mut Graph, in_shell: bool)
             match graph.add_node_to(description, node_type, to)
             {
                 Ok(id) => {
-                    println!("Ha! Your workload just got a little bigger. Node added:"); 
+                    println!("Ha! Your workload just got a little bigger. Node added:");
                     graph.print_node(id, 1).unwrap();
 
                 },
@@ -325,7 +325,7 @@ fn perform_command(command: Command, graph: &mut Graph, in_shell: bool)
             match graph.add_node_above(description, node_type, above)
             {
                 Ok(id) => {
-                    println!("Ha! Your workload just got a little bigger. Node added:"); 
+                    println!("Ha! Your workload just got a little bigger. Node added:");
                     graph.print_node(id, 1).unwrap();
                 },
                 Err(message) => {
@@ -397,7 +397,7 @@ fn perform_command(command: Command, graph: &mut Graph, in_shell: bool)
                 }
             }
         },
-        Command::Edit { id, new_description } => 
+        Command::Edit { id, new_description } =>
         {
             match graph.relabel(id, new_description)
             {
@@ -405,7 +405,7 @@ fn perform_command(command: Command, graph: &mut Graph, in_shell: bool)
                 Err(message) => println!("{}", message)
             }
         }
-        Command::Shell => 
+        Command::Shell =>
         {
             // the following could be recursive if already in shell mode.
             // However, this may not be an issue, as many shells are implemented as such.

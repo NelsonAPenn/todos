@@ -27,9 +27,9 @@ else
   # install fresh
 
   # create todos directory
-  mkdir -p "$install_root" 
+  mkdir -p "$install_root"
   echo "{\"nodes\":[]}" > "$install_root/todos"
- 
+
   # create config.toml
   echo "\
 goal_color = \"1;94\"

@@ -15,7 +15,7 @@ The idea behind this project is to show you only the tasks on your list that you
 
 - *nix / MacOS:
   1. Clone the repo
-  2. Whenever you want to update, `cd` into the repo and run `update_or_install.sh` 
+  2. Whenever you want to update, `cd` into the repo and run `update_or_install.sh`
 
 - Windows
   1. Clone the repo
@@ -87,7 +87,7 @@ todos use [id of new effective root] # a specific node in the DAG
 - `edit` command: to change the description of a node.
 ```bash
 todos edit [id of node] [new description]
-# or 
+# or
 todos relabel [id of node] [new description]
 ```
 
